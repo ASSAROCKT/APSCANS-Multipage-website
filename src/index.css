@@ -11,3 +11,36 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* --- REQUIRED GLOBAL STYLES FOR FULL-HEIGHT LAYOUT AND SCROLL CONTROL --- */
+html, body, #root {
+  height: 100%; /* Ensures they take up the full viewport height */
+  margin: 0;   /* Removes default browser margins */
+  padding: 0;  /* Removes default browser padding */
+  /*
+    Critical: Set overflow to hidden for html/body/root.
+    This delegates all scrolling control to your React components,
+    which now explicitly manage overflow-y-auto for vertical mode
+    and overflow-hidden for single/double modes.
+  */
+  overflow: hidden;
+}
+
+/* --- REMOVE THESE SECTIONS --- */
+/*
+// REMOVE THIS BLOCK AND THE @MEDIA BLOCKS BELOW IT
+.h-screen-minus-header {
+  height: calc(100vh - 80px);
+}
+
+@media (max-width: 767px) {
+  .h-screen-minus-header {
+    height: calc(100vh - 80px);
+  }
+}
+@media (min-width: 768px) {
+  .h-screen-minus-header {
+    height: calc(100vh - 64px);
+  }
+}
+*/

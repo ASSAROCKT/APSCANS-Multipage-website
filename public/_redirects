@@ -1,0 +1,23 @@
+# Specific static pages
+/about /about.html 200
+
+# More specific dynamic routes first (e.g., /manga/chapter)
+/:slug/:chapter /reader.html?mangaTitle=:slug&chapterKey=:chapter 200
+
+# Less specific dynamic routes second (e.g., /manga)
+/:slug /series.html?mangaTitle=:slug 200
+
+# Fallback for client-side routing (crucial for homepage and unmatched routes)
+/* /index.html 200
+
+# 301 Redirects for old HTML paths to clean URLs (for SEO)
+# Ensure these are distinct and don't create loops.
+# Comments must be on their own line.
+
+/series.html?mangaTitle=:slug /:slug 301
+/reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301
+
+# Generic redirects for old .html files if accessed directly without parameters
+# Redirect these to the root or a logical starting point
+/series.html / 301
+/reader.html / 301
