@@ -14,7 +14,7 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true, // Clean the output directory before each build.
-    publicPath: '/', // <--- ADD THIS LINE HERE
+    publicPath: '/', // <--- THIS LINE IS CRITICAL
   },
   module: {
     rules: [
