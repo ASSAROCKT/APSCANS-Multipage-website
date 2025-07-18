@@ -1,13 +1,17 @@
 # _redirects (for Cloudflare Pages)
 
-# Clean URL for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
-/:slug /series.html?mangaTitle=:slug 200
-
-# Clean URL for reader page: /manga-slug/chapter-key -> /reader.html?mangaTitle=manga-slug&chapterKey=chapter-key
-/:slug/:chapter /reader.html?mangaTitle=:slug&chapterKey=:chapter 200
-
-# Optional: Redirect old .html paths to new clean paths (301 for SEO)
+# Rule 1: Redirect old .html query string paths to clean URLs (301 for SEO)
 # This sends browsers/search engines to the new preferred URL
-/series.html / 301
 /series.html?mangaTitle=:slug /:slug 301
 /reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301
+
+# Rule 2: Optional: Redirect direct access to top-level .html files if they shouldn't be accessed directly
+# This assumes your React app handles /series and /reader routes
+/series.html / 301
+/reader.html / 301
+
+# Rule 3: The essential rule for SPAs - rewrite all unmatched paths to index.html
+# This tells Cloudflare Pages to serve your main React app (index.html)
+# for any route that isn't a direct static file match.
+# Your React Router then takes over and handles the specific path.
+/* /index.html 200
