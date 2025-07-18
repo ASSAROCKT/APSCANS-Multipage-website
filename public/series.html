@@ -1,14 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aphrodite Scans - Series</title>
-    <link rel="stylesheet" href="/App.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    </head>
 <body class="bg-gray-950 font-inter text-white">
-    <div id="root"></div>
+  <div id="root"></div>
+
+  <script>
+    // Get query param
+    const params = new URLSearchParams(window.location.search);
+    const mangaTitle = params.get('mangaTitle');
+
+    const root = document.getElementById('root');
+
+    if (!mangaTitle) {
+      root.innerHTML = `<h1 class="text-3xl">No series specified.</h1>`;
+    } else {
+      root.innerHTML = `
+        <h1 class="text-3xl">Series: ${decodeURIComponent(mangaTitle)}</h1>
+        <p class="mt-4">Here you would load the data for <strong>${decodeURIComponent(mangaTitle)}</strong> from your backend or JSON and render it here.</p>
+      `;
+    }
+  </script>
 </body>
-</html>
