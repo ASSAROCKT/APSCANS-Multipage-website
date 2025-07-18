@@ -1,5 +1,3 @@
-# _redirects for Cloudflare Pages - FINAL Version
-
 # Specific static pages
 /about /about.html 200
 
@@ -10,7 +8,6 @@
 /:slug /series.html?mangaTitle=:slug 200
 
 # Fallback for client-side routing (crucial for homepage and unmatched routes)
-# This rule should be safe now that the "infinite loop" warning is gone.
 /* /index.html 200
 
 # 301 Redirects for old HTML paths to clean URLs (for SEO)
