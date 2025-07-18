@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-  mode: 'development', // or 'production' for builds
+  mode: 'production', // Use 'production' for builds, 'development' for dev server
   entry: {
     home: './src/index.js',
     series: './src/series.js',
@@ -55,14 +55,31 @@ module.exports = {
       filename: 'about.html',
       chunks: ['about'],
     }),
-    // Copy static assets like App.css and _redirects to the dist folder
+    // --- CORRECTED COPYPLUGIN CONFIG ---
     new CopyPlugin({
       patterns: [
-        { from: 'src/App.css', to: 'App.css' }, // Ensure your global CSS is copied
-        { from: 'public/_redirects', to: '_redirects' }, // Copy the redirects file
-        // Add other static assets if needed, e.g., images
+        // Rule to copy App.css from src/ (if it's not being bundled by JS loaders)
+        { from: 'src/App.css', to: 'App.css' },
+
+        // Rule to copy everything from 'public' EXCEPT the HTML files
+        {
+          from: path.resolve(__dirname, 'public'),
+          to: path.resolve(__dirname, 'dist'),
+          globOptions: {
+            dot: true, // Copy dotfiles like _redirects
+            // CRITICAL FIX: Ignore HTML files that HtmlWebpackPlugin already handles
+            ignore: [
+              '**/index.html',
+              '**/series.html',
+              '**/reader.html',
+              '**/about.html',
+            ],
+          },
+          noErrorOnMissing: true,
+        },
       ],
     }),
+    // --- END OF CORRECTED COPYPLUGIN CONFIG ---
   ],
   devServer: {
     static: {
@@ -70,43 +87,36 @@ module.exports = {
     },
     compress: true,
     port: 3000,
-    // --- START OF NEW/MODIFIED DEV SERVER CONFIG ---
     historyApiFallback: {
-      // This is crucial for MPAs to handle clean URLs locally.
-      // It tells the dev server how to map incoming "clean" paths
-      // to your actual HTML files with query parameters.
       rewrites: [
-        // Rule for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
-        // The `from` regex captures the slug.
-        // The `to` function constructs the internal path with query params.
+        // 1. Exact path for the root (homepage)
+        { from: /^\/$/, to: '/index.html' },
+
+        // 2. Exact path for the about page
+        { from: /^\/about$/, to: '/about.html' },
+
+        // 3. More specific parameterized path (reader page: /slug/chapter)
         {
-          from: /^\/([^/]+)$/, // Matches /some-slug (captures 'some-slug')
+          from: /^\/([^/]+)\/([^/]+)$/, // Matches /some-slug/some-chapter
+          to: function(context) {
+            const slug = context.match[1];
+            const chapter = context.match.input.split('/')[2]; // Extract chapter from input URL directly
+            return `/reader.html?mangaTitle=${slug}&chapterKey=${chapter}`;
+          },
+        },
+
+        // 4. General parameterized path (series page: /slug)
+        {
+          from: /^\/([^/]+)$/, // Matches /some-slug
           to: function(context) {
             const slug = context.match[1];
             return `/series.html?mangaTitle=${slug}`;
           },
         },
-        // Rule for reader page: /manga-slug/chapter-key -> /reader.html?mangaTitle=manga-slug&chapterKey=chapter-key
-        {
-          from: /^\/([^/]+)\/([^/]+)$/, // Matches /some-slug/some-chapter (captures both)
-          to: function(context) {
-            const slug = context.match[1];
-            const chapter = context.match[2];
-            return `/reader.html?mangaTitle=${slug}&chapterKey=${chapter}`;
-          },
-        },
-        // Rule for the About page (if you want /about instead of /about.html)
-        {
-            from: /^\/about$/,
-            to: '/about.html',
-        },
-        // Fallback for root (home page) if needed, though direct / usually works
-        { from: /^\/$/, to: '/index.html' },
+
+        // 5. General fallback for any other path not matched by a specific file or rule above
+        { from: /./, to: '/index.html' },
       ],
-      // If none of the rewrites match and the file doesn't exist, it falls back to index.html
-      // This is common for SPAs, but for MPAs, you might want a 404 for truly missing paths.
-      // For now, let's keep it simple.
     },
-    // --- END OF NEW/MODIFIED DEV SERVER CONFIG ---
   },
 };
