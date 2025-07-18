@@ -1,0 +1,13 @@
+# _redirects (for Cloudflare Pages)
+
+# Clean URL for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
+/:slug /series.html?mangaTitle=:slug 200
+
+# Clean URL for reader page: /manga-slug/chapter-key -> /reader.html?mangaTitle=manga-slug&chapterKey=chapter-key
+/:slug/:chapter /reader.html?mangaTitle=:slug&chapterKey=:chapter 200
+
+# Optional: Redirect old .html paths to new clean paths (301 for SEO)
+# This sends browsers/search engines to the new preferred URL
+/series.html / 301
+/series.html?mangaTitle=:slug /:slug 301
+/reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301
