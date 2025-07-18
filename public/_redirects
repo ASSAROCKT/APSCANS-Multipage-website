@@ -1,23 +1,29 @@
-# Specific static pages
+# _redirects (Corrected to stop asset redirects)
+
+# HIGH PRIORITY: Explicitly serve JavaScript and CSS bundles directly.
+# This prevents greedy dynamic rules from redirecting them.
+/*.js /:splat 200
+/*.css /:splat 200
+/*.ico /:splat 200
+/*.png /:splat 200
+/*.json /:splat 200 # For manifest.json
+/*.txt /:splat 200 # For robots.txt
+
+# Then, your specific HTML pages for clean URLs (these are usually implicitly served)
 /about /about.html 200
 
-# More specific dynamic routes first (e.g., /manga/chapter)
+# More specific dynamic routing for reader (e.g., /manga/chapter serves reader.html)
 /:slug/:chapter /reader.html?mangaTitle=:slug&chapterKey=:chapter 200
 
-# Less specific dynamic routes second (e.g., /manga)
+# Less specific dynamic routing for series (e.g., /manga serves series.html)
+# This rule comes AFTER assets are handled by the lines above.
 /:slug /series.html?mangaTitle=:slug 200
 
-# Fallback for client-side routing (crucial for homepage and unmatched routes)
+# General SPA Fallback (for homepage and any other routes your client-side app handles)
 /* /index.html 200
 
-# 301 Redirects for old HTML paths to clean URLs (for SEO)
-# Ensure these are distinct and don't create loops.
-# Comments must be on their own line.
-
+# 301 Redirects for old HTML paths to clean URLs (for SEO) - keep these at the end
 /series.html?mangaTitle=:slug /:slug 301
 /reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301
-
-# Generic redirects for old .html files if accessed directly without parameters
-# Redirect these to the root or a logical starting point
 /series.html / 301
 /reader.html / 301
