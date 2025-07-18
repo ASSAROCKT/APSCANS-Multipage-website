@@ -1,13 +1,28 @@
 # _redirects (for Cloudflare Pages)
 
-# Clean URL for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
-/:slug /series.html?mangaTitle=:slug 200
+# 1. Homepage (Root path)
+/ /index.html 200
 
-# Clean URL for reader page: /manga-slug/chapter-key -> /reader.html?mangaTitle=manga-slug&chapterKey=chapter-key
+# 2. Specific static pages (e.g., /about)
+# This rule must come before the general dynamic :slug rule
+/about /about.html 200
+
+# 3. Clean URL for reader page: /manga-slug/chapter-key -> /reader.html?mangaTitle=manga-slug&chapterKey=chapter-key
+# This more specific rule must come before the single-segment :slug rule
 /:slug/:chapter /reader.html?mangaTitle=:slug&chapterKey=:chapter 200
 
+# 4. Clean URL for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
+# This general dynamic rule comes after specific pages and multi-segment dynamic rules
+/:slug /series.html?mangaTitle=:slug 200
+
+# 5. General Fallback for client-side routing
+# This rule ensures that any path not explicitly matched above (e.g., if a user refreshes on a React-router managed route)
+# will fall back to index.html for your client-side router to handle.
+/* /index.html 200
+
+
 # Optional: Redirect old .html paths to new clean paths (301 for SEO)
-# This sends browsers/search engines to the new preferred URL
+# These send browsers/search engines to the new preferred URL
 /series.html / 301
 /series.html?mangaTitle=:slug /:slug 301
 /reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301
