@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-  mode: 'production',
+  mode: 'production', // Use 'production' for builds, 'development' for dev server
   entry: {
     home: './src/index.js',
     series: './src/series.js',
@@ -13,7 +13,8 @@ module.exports = {
   output: {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
-    clean: true,
+    clean: true, // Clean the output directory before each build.
+    publicPath: '/', // <--- ADD THIS LINE HERE
   },
   module: {
     rules: [
@@ -27,10 +28,10 @@ module.exports = {
           },
         },
       },
-      // Uncomment this if you import CSS in JS
+      // If you were importing CSS directly into your JS entry files:
       // {
       //   test: /\.css$/,
-      //   use: ['style-loader', 'css-loader'],
+      //   use: ['style-loader', 'css-loader', 'postcss-loader'],
       // },
     ],
   },
@@ -57,9 +58,7 @@ module.exports = {
     }),
     new CopyPlugin({
       patterns: [
-        // Copy CSS from src if not bundled
-        { from: 'src/App.css', to: 'App.css', noErrorOnMissing: true },
-        // Copy everything else in public (except HTML)
+        { from: 'src/App.css', to: 'App.css' },
         {
           from: path.resolve(__dirname, 'public'),
           to: path.resolve(__dirname, 'dist'),
@@ -77,4 +76,42 @@ module.exports = {
       ],
     }),
   ],
+  devServer: {
+    static: {
+      directory: path.join(__dirname, 'dist'),
+    },
+    compress: true,
+    port: 3000,
+    historyApiFallback: {
+      rewrites: [
+        // 1. Exact path for the root (homepage)
+        { from: /^\/$/, to: '/index.html' },
+
+        // 2. Exact path for the about page
+        { from: /^\/about$/, to: '/about.html' },
+
+        // 3. More specific parameterized path (reader page: /slug/chapter)
+        {
+          from: /^\/([^/]+)\/([^/]+)$/, // Matches /some-slug/some-chapter
+          to: function(context) {
+            const slug = context.match[1];
+            const chapter = context.match.input.split('/')[2]; // Extract chapter from input URL directly
+            return `/reader.html?mangaTitle=${slug}&chapterKey=${chapter}`;
+          },
+        },
+
+        // 4. General parameterized path (series page: /slug)
+        {
+          from: /^\/([^/]+)$/, // Matches /some-slug
+          to: function(context) {
+            const slug = context.match[1];
+            return `/series.html?mangaTitle=${slug}`;
+          },
+        },
+
+        // 5. General fallback for any other path not matched by a specific file or rule above
+        { from: /./, to: '/index.html' },
+      ],
+    },
+  },
 };
