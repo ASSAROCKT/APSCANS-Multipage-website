@@ -1,39 +1,13 @@
 # _redirects (for Cloudflare Pages)
 
-# REWRITE RULES (for clean URLs that map to specific HTML files with parameters)
-# These effectively make /my-manga load series.html?mangaTitle=my-manga,
-# but the URL in the browser remains /my-manga.
-# The order here is important: more specific rules first.
+# Clean URL for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
+/:slug /series.html?mangaTitle=:slug 200
 
 # Clean URL for reader page: /manga-slug/chapter-key -> /reader.html?mangaTitle=manga-slug&chapterKey=chapter-key
 /:slug/:chapter /reader.html?mangaTitle=:slug&chapterKey=:chapter 200
 
-# Clean URL for series page: /manga-slug -> /series.html?mangaTitle=manga-slug
-# This must come AFTER the reader rule if a series slug can be a prefix for a reader path.
-# Otherwise, /manga-slug/chapter-key might incorrectly match this rule.
-/:slug /series.html?mangaTitle=:slug 200
-
-# DIRECT REDIRECTS (for other .html files that are distinct pages)
-# These simply map a direct path to an HTML file.
-# Cloudflare Pages often handles this automatically for top-level HTML files,
-# but explicit rules can provide more control.
-/about /about.html 200
-/reader /reader.html 200
-/series /series.html 200
-
-
-# OPTIONAL: Redirect old .html paths to new clean paths (301 for SEO)
+# Optional: Redirect old .html paths to new clean paths (301 for SEO)
 # This sends browsers/search engines to the new preferred URL
-# These should be distinct from the 200 rules above and ensure they lead
-# to the desired *public-facing* clean URL.
 /series.html / 301
-/series.html?mangaTitle=:slug /:slug 301 # Redirects old series.html?param to /slug
-/reader.html / 301
-/reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301 # Redirects old reader.html?param to /slug/chapter
-
-# OPTIONAL: Fallback for 404 (if a path doesn't match anything above)
-# This would typically serve your main index.html or a custom 404 page.
-# If not present, Cloudflare Pages will serve its default 404.
-# /* /index.html 200 # ONLY if index.html is your default 404 or catch-all. Otherwise, omit.
-# Consider a specific 404 page:
-# /* /404.html 404
+/series.html?mangaTitle=:slug /:slug 301
+/reader.html?mangaTitle=:slug&chapterKey=:chapter /:slug/:chapter 301
