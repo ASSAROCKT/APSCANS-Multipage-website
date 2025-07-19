@@ -105,25 +105,24 @@ function SeriesPage() {
       <div className="container mx-auto p-4 max-w-7xl">
         <div className="bg-gray-900 rounded-xl shadow-xl overflow-hidden mb-8 border border-gray-700 flex flex-col lg:flex-row">
           {/* Left Panel */}
-          {/* Changed items-center to items-start for left alignment of content */}
-          <div className="lg:w-1/3 p-6 flex flex-col items-start border-b lg:border-b-0 lg:border-r border-gray-700">
+          <div className="lg:w-1/3 p-4 flex flex-col items-start border-b lg:border-b-0 lg:border-r border-gray-700">
             <img
               src={mangaData.cover}
               alt={`${mangaData.title} Cover`}
-              className="w-56 h-auto rounded-lg shadow-md mb-6 object-cover mx-auto" // mx-auto keeps image centered
+              className="w-full h-auto max-w-[280px] rounded-lg shadow-md mb-6 object-cover mx-auto"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "https://placehold.co/224x320/333333/FFFFFF?text=No+Cover";
+                e.target.src = "https://placehold.co/280x400/333333/FFFFFF?text=No+Cover";
               }}
             />
 
             {/* Genres - Left aligned, rectangle shape */}
             {mangaData.genres && mangaData.genres.length > 0 && (
-              <div className="mb-4 text-left w-full"> {/* Changed text-center to text-left */}
+              <div className="mb-4 text-left w-full">
                 <h3 className="text-xl font-semibold text-gray-200 mb-2">Genres</h3>
-                <div className="flex flex-wrap gap-2 justify-start"> {/* Changed justify-center to justify-start */}
+                <div className="flex flex-wrap gap-2 justify-start">
                   {mangaData.genres.map((genre, index) => (
-                    <span key={index} className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-md border border-gray-600"> {/* Changed rounded-full to rounded-md */}
+                    <span key={index} className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-md border border-gray-600">
                       {genre}
                     </span>
                   ))}
@@ -133,11 +132,11 @@ function SeriesPage() {
 
             {/* Themes - Left aligned, rectangle shape */}
             {mangaData.themes && mangaData.themes.length > 0 && (
-              <div className="mb-4 text-left w-full"> {/* Changed text-center to text-left */}
+              <div className="mb-4 text-left w-full">
                 <h3 className="text-xl font-semibold text-gray-200 mb-2">Themes</h3>
-                <div className="flex flex-wrap gap-2 justify-start"> {/* Changed justify-center to justify-start */}
+                <div className="flex flex-wrap gap-2 justify-start">
                   {mangaData.themes.map((theme, index) => (
-                    <span key={index} className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-md border border-gray-600"> {/* Changed rounded-full to rounded-md */}
+                    <span key={index} className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-md border border-gray-600">
                       {theme}
                     </span>
                   ))}
@@ -147,9 +146,9 @@ function SeriesPage() {
 
             {/* Demographic - Left aligned, rectangle shape */}
             {mangaData.demographic && (
-              <div className="mb-6 text-left w-full"> {/* Changed text-center to text-left */}
+              <div className="mb-6 text-left w-full">
                 <h3 className="text-xl font-semibold text-gray-200 mb-2">Demographic</h3>
-                <span className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-md border border-gray-600"> {/* Changed rounded-full to rounded-md */}
+                <span className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-md border border-gray-600">
                   {mangaData.demographic}
                 </span>
               </div>
@@ -163,8 +162,6 @@ function SeriesPage() {
               Start Reading
             </a>
 
-            {/* Removed: Engagement Metrics, Update Schedule, Rate This Novel */}
-
           </div>
 
           {/* Right Panel */}
@@ -174,7 +171,7 @@ function SeriesPage() {
               className="w-full h-80 bg-cover rounded-tr-xl lg:rounded-tl-none hidden lg:block"
               style={{
                 backgroundImage: `url(${mangaData.cover})`,
-                backgroundPosition: 'center top' // Adjust as needed for banner visual centering
+                backgroundPosition: 'center top'
               }}
               aria-label={`${mangaData.title} Banner`}
             ></div>
@@ -184,8 +181,6 @@ function SeriesPage() {
               <p className="text-gray-300 text-lg mb-4">
                 <span className="font-semibold">Artist:</span> {mangaData.artist} | <span className="font-semibold">Author:</span> {mangaData.author}
               </p>
-
-              {/* Removed: Genre, Themes, Demographic from here */}
 
               {/* Description with Show More/Less */}
               <div className="text-gray-300 text-base mb-6">
@@ -207,16 +202,13 @@ function SeriesPage() {
                   <table className="min-w-full divide-y divide-gray-700">
                     <thead className="sticky top-0 bg-gray-800 z-10">
                       <tr>
-                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider rounded-tl-lg">
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-20"> {/* Added width class for Chapter */}
                           Chapter
                         </th>
                         <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Title
                         </th>
-                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                          Group
-                        </th>
-                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider rounded-tr-lg">
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider rounded-tr-lg w-32"> {/* Added width class for Last Updated */}
                           Last Updated
                         </th>
                       </tr>
@@ -225,27 +217,23 @@ function SeriesPage() {
                       {sortedChapterKeys.map((chapterKey) => {
                         const chapter = mangaData.chapters[chapterKey];
                         const lastUpdatedDate = formatTimestampToDate(chapter.last_updated);
-                        const groupName = Object.keys(chapter.groups)[0] || 'N/A';
 
                         return (
                           <tr
                             key={chapterKey}
-                            className="hover:bg-gray-800 cursor-pointer transition duration-150 ease-in-out"
+                            className="hover:bg-gray-800 transition duration-150 ease-in-out"
                           >
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">
-                              <a href={`/${slugify(mangaData.title)}/${chapterKey}`}
-                                className="text-indigo-400 hover:text-indigo-300">
-                                {chapterKey}
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-white" colSpan="3">
+                              <a
+                                href={`/${slugify(mangaData.title)}/${chapterKey}`}
+                                className="block w-full h-full text-indigo-400 hover:text-indigo-300"
+                              >
+                                <div className="grid grid-cols-[80px_1fr_120px] gap-4 items-center"> {/* Adjusted grid-cols to specify widths */}
+                                  <div className="text-left">{chapterKey}</div> {/* No col-span needed here, grid handles it */}
+                                  <div className="text-left">{chapter.title}</div>
+                                  <div className="text-left">{lastUpdatedDate}</div>
+                                </div>
                               </a>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                              {chapter.title}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                              {groupName}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                              {lastUpdatedDate}
                             </td>
                           </tr>
                         );

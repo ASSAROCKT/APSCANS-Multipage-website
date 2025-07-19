@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import HeroCarousel from '../components/HeroCarousel'; // Import the new component
+import HeroBanner from '../components/HeroBanner'; // Import the new HeroBanner component
 import { slugify } from '../utils/slugify';
 
 function HomePage() {
@@ -11,38 +11,36 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Function to fetch all manga data
+  // Function to fetch all manga data for Latest Updates and All Series sections
   const fetchAllMangaData = async () => {
     try {
       setLoading(true);
+      // These URLs are for the 'Latest Updates' and 'All Series' sections
+      // The HeroBanner fetches its own data from Banner.json
       const urls = [
-        // CORRECTED URLS TO MATCH YOUR SERIESPAGE AND LIKELY ACTUAL LOCATION
         'https://raw.githubusercontent.com/ASSAROCKT/aphroditescans/refs/heads/main/Tsumi%20to%20Batsu%20no%20Spica.json',
-        'https://raw.githubusercontent.com/ASSAROCKT/aphroditescans/refs/heads/main/Olympia%20of%20Infidelity.json'
-        // IMPORTANT: Add more manga JSON URLs here for more items in the carousel and latest updates
+        'https://raw.githubusercontent.com/ASSAROCKT/aphroditescans/refs/heads/main/Olympia%20of%20Infidelity.json',
+        'https://raw.githubusercontent.com/ASSAROCKT/aphroditescans/refs/heads/main/Kanojo%20wa%20Mada%20Sore%20o%20Shiranai.json' // Added another manga URL
       ];
 
       const fetchPromises = urls.map(url =>
         fetch(url).then(response => {
           if (!response.ok) {
-            // Log the specific URL that failed for easier debugging
             console.warn(`HTTP error! status: ${response.status} from ${url}`);
-            // Instead of throwing, return null to filter out failed fetches later
             return null;
           }
           return response.json();
         }).catch(e => {
             console.error(`Network or parsing error for ${url}:`, e);
-            return null; // Return null on network/parsing errors too
+            return null;
         })
       );
 
       const rawData = await Promise.all(fetchPromises);
-      // Filter out any nulls from failed fetches
       const successfulData = rawData.filter(data => data !== null);
 
       if (successfulData.length === 0 && urls.length > 0) {
-          setError("No manga data could be loaded. Please check source URLs.");
+          setError("No manga data could be loaded for Latest Updates/All Series. Please check source URLs.");
           setLoading(false);
           return;
       }
@@ -51,8 +49,8 @@ function HomePage() {
 
       // --- Process data for "Latest Updates" (chapter-centric) ---
       let allChapterUpdates = [];
-      successfulData.forEach(manga => { // Use successfulData
-        Object.keys(manga.chapters).forEach(chapterKey => {
+      successfulData.forEach(manga => {
+        Object.keys(manga.chapters || {}).forEach(chapterKey => { // Added || {} for safety
           const chapter = manga.chapters[chapterKey];
           allChapterUpdates.push({
             mangaTitle: manga.title,
@@ -64,12 +62,12 @@ function HomePage() {
         });
       });
 
+      // Sort by lastUpdated (newest first)
       const sortedChapterUpdates = allChapterUpdates.sort((a, b) => b.lastUpdated - a.lastUpdated);
+      // Display top 8 latest updates (2 columns * 4 rows = 8 items)
       setDisplayLatestMangaData(sortedChapterUpdates.slice(0, 8));
 
     } catch (e) {
-      // This catch block will primarily catch errors from Promise.all itself,
-      // not individual fetch failures if we handle them within the map.
       console.error("Critical error fetching all manga data:", e);
       setError("Failed to load manga data. Please try again later.");
     } finally {
@@ -97,10 +95,11 @@ function HomePage() {
     );
   }
 
-  if (allMangaData.length === 0 && !loading && !error) { // Ensure we only show this if no data and no active error
+  // This check is for the Latest Updates/All Series sections, not the banner
+  if (allMangaData.length === 0 && !loading && !error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-400">
-        <div className="text-xl font-semibold">No manga data available.</div>
+        <div className="text-xl font-semibold">No manga data available for Latest Updates/All Series.</div>
       </div>
     );
   }
@@ -110,33 +109,47 @@ function HomePage() {
       <Header />
       <div className="container mx-auto p-4 min-h-[calc(100vh-64px)]">
 
-        {/* ======================= Hero Carousel Section ======================= */}
-        {/* Pass allMangaData to the HeroCarousel */}
-        <HeroCarousel mangaData={allMangaData} />
+        {/* ======================= Hero Banner Section (New) ======================= */}
+        {/* The HeroBanner component now fetches its own data */}
+        <HeroBanner />
 
         {/* ======================= Latest Updates Section ======================= */}
         <h1 className="text-4xl font-bold text-indigo-400 mb-8 text-center">Latest Updates</h1>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
           {displayLatestMangaData.map((chapterUpdate, index) => (
-            <a
+            <div
               key={`${chapterUpdate.mangaTitle}-${chapterUpdate.chapterKey}`}
-              href={`/${slugify(chapterUpdate.mangaTitle)}/${chapterUpdate.chapterKey}`}
               className="group block bg-gray-900 rounded-lg shadow-md hover:shadow-xl transition duration-300 ease-in-out transform hover:-translate-y-1 overflow-hidden border border-gray-800 hover:border-indigo-600"
             >
-              <img
-                src={chapterUpdate.mangaCover}
-                alt={`${chapterUpdate.mangaTitle} Cover`}
-                className="w-full h-48 object-cover object-top rounded-t-lg transition duration-300 ease-in-out group-hover:scale-105"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "https://placehold.co/200x280/333333/FFFFFF?text=No+Cover";
-                }}
-              />
-              <div className="p-3">
-                <h3 className="text-white font-semibold text-lg mb-1 truncate">{chapterUpdate.mangaTitle}</h3>
-                <p className="text-gray-400 text-sm">Ch. {chapterUpdate.chapterKey}</p>
-              </div>
-            </a>
+              {/* This anchor tag now wraps the image and chapter info */}
+              <a 
+                href={`/${slugify(chapterUpdate.mangaTitle)}/${chapterUpdate.chapterKey}`}
+                className="block" // Make the anchor tag a block to wrap content
+              >
+                <img
+                  src={chapterUpdate.mangaCover}
+                  alt={`${chapterUpdate.mangaTitle} Cover`}
+                  className="w-full h-64 object-cover object-top rounded-t-lg transition duration-300 ease-in-out group-hover:scale-105"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/200x280/333333/FFFFFF?text=No+Cover";
+                  }}
+                />
+                <div className="p-3">
+                  {/* Separate anchor tag for manga title only */}
+                  <h3 className="mb-1 truncate">
+                    <a
+                      href={`/${slugify(chapterUpdate.mangaTitle)}`}
+                      className="text-white font-semibold text-lg hover:text-indigo-400 hover:underline transition-colors duration-300"
+                      onClick={(e) => e.stopPropagation()} // Prevent parent link from triggering
+                    >
+                      {chapterUpdate.mangaTitle}
+                    </a>
+                  </h3>
+                  <p className="text-gray-400 text-sm">Ch. {chapterUpdate.chapterKey}</p>
+                </div>
+              </a>
+            </div>
           ))}
         </div>
 

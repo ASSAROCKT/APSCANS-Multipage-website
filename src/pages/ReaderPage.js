@@ -146,6 +146,14 @@ function ReaderPage() {
     }
   }, [mangaData]);
 
+  // New function to navigate to series page
+  const navigateToSeriesPage = useCallback(() => {
+    if (mangaData) {
+      window.location.href = `/${slugify(mangaData.title)}`;
+    }
+  }, [mangaData]);
+
+
   const goToPreviousChapter = useCallback(() => {
     if (currentChapterIndex > 0) {
       const prevChapterKey = chapterKeys[currentChapterIndex - 1];
@@ -157,24 +165,48 @@ function ReaderPage() {
     if (currentChapterIndex < chapterKeys.length - 1) {
       const nextChapterKey = chapterKeys[currentChapterIndex + 1];
       navigateToChapter(nextChapterKey);
+    } else {
+      // If no next chapter, go to series page
+      navigateToSeriesPage();
     }
-  }, [currentChapterIndex, chapterKeys, navigateToChapter]);
+  }, [currentChapterIndex, chapterKeys, navigateToChapter, navigateToSeriesPage]);
 
   const handlePageChange = useCallback((newPage) => {
-    const newPageIndex = Math.max(1, Math.min(newPage, totalImages));
+    let newPageIndex = newPage;
+    if (readingMode === 'double') {
+      // In double page mode, each click advances by 2 pages
+      newPageIndex = currentPage + (newPage - currentPage > 0 ? 2 : -2);
+    }
+    newPageIndex = Math.max(1, Math.min(newPageIndex, totalImages));
+
     if (newPageIndex !== currentPage) {
       setCurrentPage(newPageIndex);
+    } else if (newPage > totalImages) { // User tried to go past the last page
+      goToNextChapter();
+    } else if (newPage < 1) { // User tried to go before the first page
+        goToPreviousChapter();
     }
-  }, [totalImages, currentPage]);
+  }, [totalImages, currentPage, readingMode, goToNextChapter, goToPreviousChapter]);
 
 
   // Mouse click handler for single/double page modes
   const handleReaderClick = useCallback(() => {
     if ((readingMode === 'single' || readingMode === 'double') && !showReaderMenu) {
-      if (currentPage < totalImages) {
-        handlePageChange(currentPage + 1);
-      } else {
-        goToNextChapter();
+      if (readingMode === 'single') {
+        if (currentPage < totalImages) {
+          handlePageChange(currentPage + 1);
+        } else {
+          goToNextChapter(); // Advance to next chapter or series page
+        }
+      } else if (readingMode === 'double') {
+        // In double page mode, advance by 2 pages per click
+        if (currentPage + 1 < totalImages) { // Check if there are at least two more pages
+          handlePageChange(currentPage + 2);
+        } else if (currentPage < totalImages) { // If only one page left, show that and then go to next chapter
+            handlePageChange(currentPage + 1); // Show the last odd page
+        } else {
+            goToNextChapter(); // Advance to next chapter or series page
+        }
       }
     }
   }, [readingMode, currentPage, totalImages, handlePageChange, goToNextChapter, showReaderMenu]);
@@ -208,19 +240,23 @@ function ReaderPage() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) && (readingMode === 'single' || readingMode === 'double')) {
-        event.preventDefault();
+        event.preventDefault(); // Prevent default scroll behavior
       }
 
       if (event.key === 'ArrowLeft') {
-        if (readingMode === 'single' || readingMode === 'double') {
+        if (readingMode === 'single') {
           handlePageChange(currentPage - 1);
-        } else {
+        } else if (readingMode === 'double') {
+          handlePageChange(currentPage - 2); // Go back two pages in double mode
+        } else { // vertical mode
           goToPreviousChapter();
         }
       } else if (event.key === 'ArrowRight') {
-        if (readingMode === 'single' || readingMode === 'double') {
+        if (readingMode === 'single') {
           handlePageChange(currentPage + 1);
-        } else {
+        } else if (readingMode === 'double') {
+          handlePageChange(currentPage + 2); // Go forward two pages in double mode
+        } else { // vertical mode
           goToNextChapter();
         }
       }
@@ -280,6 +316,7 @@ function ReaderPage() {
     if (readingMode === 'vertical') {
         return 'w-auto max-w-full h-auto object-contain mx-auto';
     } else {
+      // In single/double mode, images should fit within the viewport height
         return 'max-h-full max-w-full object-contain mx-auto';
     }
   };
@@ -324,6 +361,21 @@ function ReaderPage() {
   const mangaTitle = mangaData.title;
   const mangaGenre = mangaData.genre;
 
+  // Determine which pages to display in double page mode
+  const displayImageIndices = [];
+  if (readingMode === 'double') {
+    if (currentPage <= totalImages) {
+      displayImageIndices.push(currentPage - 1); // Left page
+      if (currentPage < totalImages) {
+        displayImageIndices.push(currentPage); // Right page
+      }
+    }
+  } else if (readingMode === 'single') {
+    if (currentPage <= totalImages) {
+      displayImageIndices.push(currentPage - 1);
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-gray-950 font-inter text-white flex flex-col">
@@ -337,9 +389,11 @@ function ReaderPage() {
         ref={contentAreaRef}
         onClick={handleReaderClick}
         className={`flex-grow flex flex-col items-center justify-between px-4
-                       ${!isHeaderHidden ? 'pt-[64px]' : 'pt-0'}
-                       ${readingMode === 'vertical' ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'}`}
+                        ${!isHeaderHidden ? 'pt-[64px]' : 'pt-0'}
+                        ${readingMode === 'vertical' ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden h-screen'}`}
       >
+        {/* Remove the explicit Previous/Next Chapter buttons for single/double modes */}
+        {/*
         {(readingMode === 'single' || readingMode === 'double') && (
           <div className="flex justify-between items-center mt-4 w-full max-w-2xl">
             <button
@@ -362,10 +416,11 @@ function ReaderPage() {
             </button>
           </div>
         )}
+        */}
 
 
         <div className={`flex w-full justify-center items-center p-0 flex-grow
-                         ${readingMode === 'vertical' ? 'flex-col' : 'flex-row'}`}>
+                            ${readingMode === 'vertical' ? 'flex-col' : 'flex-row'}`}>
           {imageUrls.length > 0 ? (
             readingMode === 'vertical' ? (
               imageUrls.map((imageUrl, index) => (
@@ -395,89 +450,34 @@ function ReaderPage() {
                   )}
                 </div>
               ))
-            ) : readingMode === 'single' ? (
-              <div key={`single-page-wrapper`} className="flex-grow flex justify-center items-center h-full">
-                <div key={`single-page-${currentPage - 1}`} className="relative h-full w-full flex justify-center items-center overflow-hidden">
-                  {!imageLoadErrors[currentPage - 1] && !preloadedImagesRef.current[imageUrls[currentPage - 1]] && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-md">
-                      <svg className="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    </div>
-                  )}
-                  <img
-                    ref={el => imageRefs.current[currentPage - 1] = el}
-                    src={imageUrls[currentPage - 1]}
-                    alt={`Page ${currentPage}`}
-                    className={`rounded-md ${getImageFitClass()}`}
-                    onLoad={(e) => {
-                      setImageLoadErrors(prevErrors => ({ ...prevErrors, [currentPage - 1]: false }));
-                      preloadedImagesRef.current[imageUrls[currentPage - 1]] = true;
-                    }}
-                    onError={(e) => handleImageError(currentPage - 1, e)}
-                  />
-                  {imageLoadErrors[currentPage - 1] && (
-                    <p className="text-red-400 mt-1">Error loading image {currentPage}.</p>
-                  )}
-                </div>
-              </div>
-            ) : ( // double page mode (always LTR now)
-              <div className={`flex-grow flex justify-center items-center w-full gap-2 h-full flex-row`}>
-                {/* Left Page (current page) */}
-                {imageUrls[currentPage - 1] && (
-                  <div key={`double-page-left-${currentPage - 1}`} className="relative flex-1 flex justify-center items-center h-full overflow-hidden">
-                    {!imageLoadErrors[currentPage - 1] && !preloadedImagesRef.current[imageUrls[currentPage - 1]] && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-md">
-                          <svg className="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        </div>
-                      )}
+            ) : ( // single or double page mode
+              <div className={`flex-grow flex justify-center items-center w-full gap-2 h-full ${readingMode === 'double' ? 'flex-row' : ''}`}>
+                {displayImageIndices.map((imgIndex, i) => (
+                  <div key={`page-${imgIndex}`} className="relative flex-1 flex justify-center items-center h-full overflow-hidden">
+                    {!imageLoadErrors[imgIndex] && !preloadedImagesRef.current[imageUrls[imgIndex]] && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-md">
+                        <svg className="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    )}
                     <img
-                      ref={el => imageRefs.current[currentPage - 1] = el}
-                      src={imageUrls[currentPage - 1]}
-                      alt={`Page ${currentPage}`}
+                      ref={el => imageRefs.current[imgIndex] = el}
+                      src={imageUrls[imgIndex]}
+                      alt={`Page ${imgIndex + 1}`}
                       className={`rounded-md ${getImageFitClass()}`}
                       onLoad={(e) => {
-                        setImageLoadErrors(prevErrors => ({ ...prevErrors, [currentPage - 1]: false }));
-                        preloadedImagesRef.current[imageUrls[currentPage - 1]] = true;
+                        setImageLoadErrors(prevErrors => ({ ...prevErrors, [imgIndex]: false }));
+                        preloadedImagesRef.current[imageUrls[imgIndex]] = true;
                       }}
-                      onError={(e) => handleImageError(currentPage - 1, e)}
+                      onError={(e) => handleImageError(imgIndex, e)}
                     />
-                    {imageLoadErrors[currentPage - 1] && (
-                        <p className="text-red-400 mt-1">Error loading image {currentPage}.</p>
+                    {imageLoadErrors[imgIndex] && (
+                      <p className="text-red-400 mt-1">Error loading image {imgIndex + 1}.</p>
                     )}
                   </div>
-                )}
-                {/* Right Page (current page + 1) */}
-                {imageUrls[currentPage] && (
-                  <div key={`double-page-right-${currentPage}`} className="relative flex-1 flex justify-center items-center h-full overflow-hidden">
-                    {!imageLoadErrors[currentPage] && !preloadedImagesRef.current[imageUrls[currentPage]] && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-md">
-                          <svg className="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        </div>
-                      )}
-                    <img
-                      ref={el => imageRefs.current[currentPage] = el}
-                      src={imageUrls[currentPage]}
-                      alt={`Page ${currentPage + 1}`}
-                      className={`rounded-md ${getImageFitClass()}`}
-                      onLoad={(e) => {
-                        setImageLoadErrors(prevErrors => ({ ...prevErrors, [currentPage]: false }));
-                        preloadedImagesRef.current[imageUrls[currentPage]] = true;
-                      }}
-                      onError={(e) => handleImageError(currentPage, e)}
-                    />
-                    {imageLoadErrors[currentPage] && (
-                        <p className="text-red-400 mt-1">Error loading image {currentPage + 1}.</p>
-                    )}
-                  </div>
-                )}
+                ))}
               </div>
             )
           ) : (
@@ -485,26 +485,33 @@ function ReaderPage() {
           )}
         </div>
 
-        {((readingMode === 'single' || readingMode === 'double') || (readingMode === 'vertical' && currentPage === totalImages)) && (
+        {/* Keep the Previous/Next Chapter buttons only for Vertical mode at the bottom, or if it's the last page in single/double */}
+        {((readingMode === 'vertical' && currentPage === totalImages) || (readingMode === 'single' || readingMode === 'double')) && (
           <div className="flex justify-between items-center mb-10 mt-6 w-full max-w-2xl">
-            <button
-              onClick={(e) => { e.stopPropagation(); goToPreviousChapter(); }}
-              disabled={currentChapterIndex === 0}
-              className={`bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out ${
-                currentChapterIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'
-              }`}
-            >
-              &larr; Previous Chapter
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); goToNextChapter(); }}
-              disabled={currentChapterIndex === chapterKeys.length - 1}
-              className={`bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out ${
-                currentChapterIndex === chapterKeys.length - 1 ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'
-              }`}
-            >
-              Next Chapter &rarr;
-            </button>
+            {/* Show Previous Chapter button for vertical mode always, or if not on the first page of current chapter in single/double */}
+            {(readingMode === 'vertical' || currentPage > 1 || currentChapterIndex > 0) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goToPreviousChapter(); }}
+                disabled={currentPage === 1 && currentChapterIndex === 0} // Disable if first page of first chapter
+                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out ${
+                  (currentPage === 1 && currentChapterIndex === 0) ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'
+                }`}
+              >
+                &larr; Previous Chapter
+              </button>
+            )}
+            {/* Show Next Chapter button for vertical mode always */}
+            {readingMode === 'vertical' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goToNextChapter(); }}
+                disabled={currentChapterIndex === chapterKeys.length - 1 && currentPage === totalImages}
+                className={`bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out ${
+                  (currentChapterIndex === chapterKeys.length - 1 && currentPage === totalImages) ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'
+                }`}
+              >
+                Next Chapter &rarr;
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -532,8 +539,8 @@ function ReaderPage() {
             onClose={() => setShowReaderMenu(false)}
             goToPreviousChapter={goToPreviousChapter}
             goToNextChapter={goToNextChapter}
-            canGoPreviousChapter={currentChapterIndex > 0}
-            canGoNextChapter={currentChapterIndex < chapterKeys.length - 1}
+            canGoPreviousChapter={currentChapterIndex > 0 || currentPage > 1} // Can go back if not first page of first chapter
+            canGoNextChapter={currentChapterIndex < chapterKeys.length - 1 || currentPage < totalImages} // Can go next if not last page of last chapter
           />
         </Suspense>
       )}
